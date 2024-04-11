@@ -5,6 +5,19 @@ inputs:
   github_token:
     description: 'GITHUB_TOKEN'
     default: '${{ github.token }}'
+  filter:
+    description: >
+      Partially clone against a given filter.
+    default: ""
+  use_sparse_checkout:
+    description: >
+      Wheter to use sparse-checkout
+    default: false
+  sparse_checkout:
+    description: >
+      Do a sparse checkout on given patterns.
+      Each pattern should be separated with a space.
+    default: ""
   merge:
     description: >
       Whether to actually merge the pull request or only check whether
@@ -57,6 +70,9 @@ runs:
         export GITHUB_TOKEN=${{ inputs.github_token }}
         export DEBUG=${{ inputs.debug }}
         export COMMENT=${{ inputs.comment }}
+        export FILTER=${{ inputs.filter }}
+        export USE_SPARSE_CHECKOUT=${{ inputs.use_sparse_checkout}}
+        export SPARSE_CHECKOUT="${{ inputs.sparse_checkout }}"
 
         # github.action_path is set to $REPO.
         if test "x${{ inputs.merge }}" = xtrue
