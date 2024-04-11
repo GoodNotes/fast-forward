@@ -34,6 +34,21 @@ case "${DEBUG:-0}" in
         ;;
 esac
 
+filter_string=""
+if [[ -n "${FILTER:-}" ]]
+then
+  filter_string="--filter=${FILTER}"
+fi
+
+case "${USE_SPARSE_CHECKOUT:-false}" in
+  0 | false | False| FALSE) USE_SPARSE_CHECKOUT=false;;
+  1 | true | True | TRUE) USE_SPARSE_CHECKOUT=true;;
+  *)
+      echo "Warning: Invalid value ('$USE_SPARSE_CHECKOUT') for USE_SPARSE_CHECKOUT." >&2;
+      USE_SPARSE_CHECKOUT=false
+      ;;
+esac
+
 # Set to true to post a comment to the issue.
 case "${COMMENT:-true}" in
     0 | never | false | FALSE) COMMENT=never;;
@@ -180,8 +195,18 @@ LOG=$(mktemp)
         } | git credential approve
 
         CLONE_URL="${CLONE_URL%://*}://${GITHUB_ACTOR}@${CLONE_URL#*://}"
-        git clone --quiet --single-branch --branch "$BASE_REF" "$CLONE_URL" .
+        git clone --quiet ${filter_string} --no-checkout "$CLONE_URL" .
 
+        if [[ ${USE_SPARSE_CHECKOUT} == true ]]
+        then
+          echo "Initialize sparse-checkout"
+          git sparse-checkout init
+          if [[ -n "${SPARSE_CHECKOUT}" ]]
+          then
+            git sparse-checkout add ${SPARSE_CHECKOUT}
+          fi
+        fi
+        git checkout "$BASE_REF"
         BASE_SHA="$(git rev-parse origin/$BASE_REF 2>/dev/null)"
     fi
 
